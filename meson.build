@@ -9,5 +9,3 @@ endforeach
 
 exe = executable(
   'clox', src, include_directories: inc)
-
-run_target('run', command: exe)
