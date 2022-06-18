@@ -1,6 +1,1 @@
-#include <hello.h>
-
-int main(void) {
-    print_hello("fxxf");
-    return 0;
-}
+int main(void) { return 0; }
