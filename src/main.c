@@ -9,8 +9,10 @@ int main(int argc, const char *argv[]) {
     chunk_init(&chunk);
 
     for (int i = 0; i < 5; i++) {
-        chunk_write(&chunk, OP_RETURN);
+        chunk_push(&chunk, OP_CONSTANT);
+        chunk_push(&chunk, chunk_add_constant(&chunk, i / 3.0));
     }
+    chunk_push(&chunk, OP_RETURN);
 
     disassemble_chunk(&chunk, "main");
     chunk_free(&chunk);
