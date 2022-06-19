@@ -1,6 +1,7 @@
 alias r := run
 alias s := setup
 alias c := compile
+alias b := buildtype
 
 build := join(justfile_directory(), 'build')
 
@@ -15,6 +16,9 @@ setup reconfigure='f':
 
 compile:
   @meson compile -C {{build}}
+
+buildtype mode='debug':
+  @meson configure {{build}} --buildtype {{mode}}
 
 format:
   # TODO
