@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "memory.h"
 #include "value.h"
 
@@ -20,4 +22,8 @@ void value_array_push(ValueArray *array, Value value) {
     }
 
     array->values[array->len++] = value;
+}
+
+void value_print(Value value) {
+    printf("%g", value);
 }
