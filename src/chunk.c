@@ -23,3 +23,8 @@ void chunk_write(Chunk *chunk, u8 byte) {
 
     chunk->code[chunk->len++] = byte;
 }
+
+int chunk_add_constant(Chunk *chunk, Value value) {
+    value_array_push(&chunk->constants, value);
+    return chunk->constants.len - 1;
+}
