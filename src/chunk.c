@@ -1,17 +1,17 @@
 #include "chunk.h"
 #include "memory.h"
 
-void init_chunk(Chunk *chunk) {
+void chunk_init(Chunk *chunk) {
     chunk->len = 0;
     chunk->cap = 0;
     chunk->code = NULL;
 }
 
-void free_chunk(Chunk *chunk) {
+void chunk_free(Chunk *chunk) {
     FREE_ARRAY(u8, chunk->code, chunk->cap);
 }
 
-void write_chunk(Chunk *chunk, u8 byte) {
+void chunk_write(Chunk *chunk, u8 byte) {
     if (chunk->len + 1 >= chunk->cap) {
         int old_cap = chunk->cap;
         chunk->cap  = GROW_CAPACITY(old_cap);

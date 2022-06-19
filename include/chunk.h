@@ -13,8 +13,8 @@ typedef struct {
     u8 *code;
 } Chunk;
 
-void init_chunk(Chunk *chunk);
-void free_chunk(Chunk *chunk);
-void write_chunk(Chunk *chunk, u8 byte);
+void chunk_init(Chunk *chunk);
+void chunk_free(Chunk *chunk);
+void chunk_write(Chunk *chunk, u8 byte);
 
 #endif
