@@ -5,10 +5,12 @@ void chunk_init(Chunk *chunk) {
     chunk->len = 0;
     chunk->cap = 0;
     chunk->code = NULL;
+    value_array_init(&chunk->constants);
 }
 
 void chunk_free(Chunk *chunk) {
     FREE_ARRAY(u8, chunk->code, chunk->cap);
+    value_array_free(&chunk->constants);
     chunk_init(chunk);
 }
 
