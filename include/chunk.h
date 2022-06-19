@@ -17,7 +17,7 @@ typedef struct {
 
 void chunk_init(Chunk *chunk);
 void chunk_free(Chunk *chunk);
-void chunk_write(Chunk *chunk, u8 byte);
+void chunk_push(Chunk *chunk, u8 byte);
 
 int chunk_add_constant(Chunk *chunk, Value value);
 

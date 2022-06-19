@@ -14,7 +14,7 @@ void chunk_free(Chunk *chunk) {
     chunk_init(chunk);
 }
 
-void chunk_write(Chunk *chunk, u8 byte) {
+void chunk_push(Chunk *chunk, u8 byte) {
     if (chunk->len + 1 >= chunk->cap) {
         int old_cap = chunk->cap;
         chunk->cap  = GROW_CAPACITY(old_cap);
