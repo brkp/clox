@@ -9,6 +9,7 @@ void chunk_init(Chunk *chunk) {
 
 void chunk_free(Chunk *chunk) {
     FREE_ARRAY(u8, chunk->code, chunk->cap);
+    chunk_init(chunk);
 }
 
 void chunk_write(Chunk *chunk, u8 byte) {
