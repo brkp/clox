@@ -1,1 +1,5 @@
-int main(void) { return 0; }
+#include "common.h"
+
+int main(int argc, const char *argv[]) {
+    return 0;
+}
