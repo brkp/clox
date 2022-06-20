@@ -9,7 +9,7 @@ static int simple_opcode(const char *name, int offset) {
 }
 
 static int constant_opcode(const char *name, Chunk *chunk, int offset) {
-    u8 constant = chunk->code[offset + 1];
+    uint8_t constant = chunk->code[offset + 1];
     printf("%-16s %4" PRIu8 " '", name, constant);
     value_print(chunk->constants.values[constant]);
     printf("'\n");
@@ -28,7 +28,7 @@ void disassemble_chunk(Chunk *chunk, const char *name) {
 int disassemble_opcode(Chunk *chunk, int offset) {
     printf("%04d ", offset);
 
-    u8 opcode = chunk->code[offset];
+    uint8_t opcode = chunk->code[offset];
     switch (opcode) {
         case OP_RETURN:
             return simple_opcode("OP_RETURN", offset);
