@@ -17,6 +17,15 @@ static int constant_opcode(const char *name, Chunk *chunk, int offset) {
     return offset + 2;
 }
 
+static int constant_long_opcode(const char *name, Chunk *chunk, int offset) {
+    uint16_t constant = chunk->code[offset + 1] << 8 | chunk->code[offset + 2];
+    printf("%-16s %4" PRIu16 " '", name, constant);
+    value_print(chunk->constants.values[constant]);
+    printf("'\n");
+
+    return offset + 3;
+}
+
 void disassemble_chunk(Chunk *chunk, const char *name) {
     printf("== %s ==\n", name);
 
@@ -38,6 +47,8 @@ int disassemble_opcode(Chunk *chunk, int offset) {
             return simple_opcode("OP_RETURN", offset);
         case OP_CONSTANT:
             return constant_opcode("OP_CONSTANT", chunk, offset);
+        case OP_CONSTANT_LONG:
+            return constant_long_opcode("OP_CONSTANT_LONG", chunk, offset);
         default:
             printf("unknown opcode: %" PRIu8 "\n", opcode);
             return offset + 1;
