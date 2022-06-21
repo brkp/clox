@@ -17,6 +17,9 @@ setup reconfigure='f':
 compile:
   @meson compile -C {{build}}
 
+clean:
+  @rm -rf {{build}}
+
 buildtype mode='debug':
   @meson configure {{build}} --buildtype {{mode}}
 
