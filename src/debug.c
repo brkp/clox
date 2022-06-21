@@ -27,6 +27,10 @@ void disassemble_chunk(Chunk *chunk, const char *name) {
 
 int disassemble_opcode(Chunk *chunk, int offset) {
     printf("%04d ", offset);
+    if (offset > 0 && chunk->line[offset] == chunk->line[offset - 1])
+        printf("   | ");
+    else
+        printf("%4d ", chunk->line[offset]);
 
     uint8_t opcode = chunk->code[offset];
     switch (opcode) {
