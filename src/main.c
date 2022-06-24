@@ -12,9 +12,10 @@ int main(int argc, const char *argv[]) {
     vm_init(&vm);
     chunk_init(&chunk);
 
-    for (int i = 0; i < 5; i++) {
-        chunk_push(&chunk, OP_CONSTANT, i);
-        chunk_push(&chunk, chunk_add_constant(&chunk, i / 3.0), i);
+    for (int i = 0; i < 256; i++) {
+        chunk_push_constant(&chunk, i, i);
+        /* chunk_push(&chunk, OP_CONSTANT, i); */
+        /* chunk_push(&chunk, chunk_add_constant(&chunk, i / 3.0), i); */
     }
     chunk_push(&chunk, OP_RETURN, 5);
 
