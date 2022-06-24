@@ -7,6 +7,7 @@ buildtype = get_option('buildtype')
 
 if buildtype.startswith('debug')
   c_args += '-DDEBUG'
+  c_args += '-DDEBUG_TRACE_EXECUTION'
 endif
 
 inc = include_directories('include')
