@@ -2,6 +2,7 @@
 
 #include "vm.h"
 #include "chunk.h"
+#include "debug.h"
 #include "value.h"
 
 static void reset_stack(VM *vm) {
@@ -30,6 +31,16 @@ static InterpretResult run(VM *vm) {
 
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
+        if (vm->sp != vm->stack) {
+            printf("\t");
+            for (Value *slot = vm->stack; slot < vm->sp; slot++) {
+                printf("[");
+                value_print(*slot);
+                printf("]");
+            }
+            printf("\n");
+        }
+
         disassemble_opcode(vm->chunk, (int)(vm->ip - vm->chunk->code));
 #endif
         uint8_t instruction;
