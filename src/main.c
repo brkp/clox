@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "common.h"
@@ -6,26 +7,62 @@
 #include "debug.h"
 #include "vm.h"
 
-int main(int argc, const char *argv[]) {
-    VM vm; vm_init(&vm);
-    Chunk chunk; chunk_init(&chunk);
+static char *read_file(const char *path) {
+    FILE *file = fopen(path, "r");
+    if (file == NULL) {
+        fprintf(stderr, "couldn't open file '%s'\n", path);
+        exit(74);
+    }
 
-    // -(3 * (1 + 2))
-    chunk_push_constant(&chunk, 3, 3);
-    chunk_push_constant(&chunk, 1, 1);
-    chunk_push_constant(&chunk, 2, 1);
-    chunk_push(&chunk, OP_ADD, 1);
-    chunk_push(&chunk, OP_MULTIPLY, 1);
-    chunk_push(&chunk, OP_NEGATE, 1);
+    fseek(file, 0L, SEEK_END);
+    size_t file_size = ftell(file);
+    rewind(file);
 
-    chunk_push(&chunk, OP_RETURN, 2);
+    char *buffer = malloc(file_size + 1);
+    if (buffer == NULL) {
+        fprintf(stderr, "not enough memory to read '%s'\n", path);
+        exit(74);
+    }
 
-    if (argc > 1 && strcmp(argv[1], "-d") == 0)
-        disassemble_chunk(&chunk, "main");
+    size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
+    if (bytes_read < file_size) {
+        fprintf(stderr, "couldn't read file '%s'\n", path);
+        exit(74);
+    }
+    buffer[bytes_read] = '\0';
 
-    vm_interpret(&vm, &chunk);
-    vm_free(&vm);
-    chunk_free(&chunk);
+    fclose(file);
+    return buffer;
+}
 
+static int repl(void) {
     return 0;
+}
+
+static int run_file(const char *path) {
+    VM vm;
+    vm_init(&vm);
+
+    char *source = read_file(path);
+    InterpretResult result = vm_interpret(&vm, source);
+
+    free(source);
+    vm_free(&vm);
+
+    switch (result) {
+        case INTERPRET_OK:            return 0;
+        case INTERPRET_COMPILE_ERROR: return 65;
+        case INTERPRET_RUNTIME_ERROR: return 70;
+    }
+}
+
+int main(int argc, const char *argv[]) {
+    switch (argc) {
+        case 1: return repl();
+        case 2: return run_file(argv[1]);
+
+        default:
+            fprintf(stderr, "usage: %s [path]\n", argv[0]);
+            return 64;
+    }
 }
