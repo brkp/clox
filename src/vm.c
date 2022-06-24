@@ -47,12 +47,12 @@ static InterpretResult run(VM *vm) {
         switch(instruction = READ_BYTE()) {
             case OP_CONSTANT: {
                 Value constant = READ_CONSTANT();
-                value_print(constant); printf("\n");
+                vm_stack_push(vm, constant);
                 break;
             }
             case OP_CONSTANT_LONG: {
                 Value constant = READ_CONSTANT_LONG();
-                value_print(constant); printf("\n");
+                vm_stack_push(vm, constant);
                 break;
             }
             case OP_RETURN:
