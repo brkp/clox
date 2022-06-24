@@ -23,6 +23,4 @@ void chunk_free(Chunk *chunk);
 void chunk_push(Chunk *chunk, uint8_t byte, int line);
 void chunk_push_constant(Chunk *chunk, Value value, int line);
 
-int chunk_add_constant(Chunk *chunk, Value value);
-
 #endif

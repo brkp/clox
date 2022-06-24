@@ -31,7 +31,8 @@ void chunk_push(Chunk *chunk, uint8_t byte, int line) {
 }
 
 void chunk_push_constant(Chunk *chunk, Value value, int line) {
-    int offset = chunk_add_constant(chunk, value);
+    value_array_push(&chunk->constants, value);
+    int offset = chunk->constants.len - 1;
 
     if (offset > 0xff) {
         chunk_push(chunk, OP_CONSTANT_LONG, line);
@@ -42,9 +43,4 @@ void chunk_push_constant(Chunk *chunk, Value value, int line) {
         chunk_push(chunk, OP_CONSTANT, line);
         chunk_push(chunk, offset, line);
     }
-}
-
-int chunk_add_constant(Chunk *chunk, Value value) {
-    value_array_push(&chunk->constants, value);
-    return chunk->constants.len - 1;
 }
