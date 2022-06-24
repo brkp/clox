@@ -1,9 +1,7 @@
 #include <stdio.h>
 
 #include "vm.h"
-#include "chunk.h"
 #include "debug.h"
-#include "value.h"
 
 static void reset_stack(VM *vm) {
     vm->sp = vm->stack;
