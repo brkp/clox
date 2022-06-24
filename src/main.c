@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "common.h"
 #include "chunk.h"
@@ -6,20 +7,16 @@
 #include "vm.h"
 
 int main(int argc, const char *argv[]) {
-    VM vm;
-    Chunk chunk;
+    VM vm; vm_init(&vm);
+    Chunk chunk; chunk_init(&chunk);
 
-    vm_init(&vm);
-    chunk_init(&chunk);
+    chunk_push_constant(&chunk, 1.2, 1);
+    chunk_push(&chunk, OP_NEGATE, 1);
+    chunk_push(&chunk, OP_RETURN, 2);
 
-    for (int i = 0; i < 256; i++) {
-        chunk_push_constant(&chunk, i, i);
-        /* chunk_push(&chunk, OP_CONSTANT, i); */
-        /* chunk_push(&chunk, chunk_add_constant(&chunk, i / 3.0), i); */
-    }
-    chunk_push(&chunk, OP_RETURN, 5);
+    if (argc > 1 && strcmp(argv[1], "-d") == 0)
+        disassemble_chunk(&chunk, "main");
 
-    disassemble_chunk(&chunk, "main");
     vm_interpret(&vm, &chunk);
     vm_free(&vm);
     chunk_free(&chunk);

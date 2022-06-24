@@ -45,16 +45,15 @@ static InterpretResult run(VM *vm) {
 #endif
         uint8_t instruction;
         switch(instruction = READ_BYTE()) {
-            case OP_CONSTANT: {
-                Value constant = READ_CONSTANT();
-                vm_stack_push(vm, constant);
+            case OP_CONSTANT:
+                vm_stack_push(vm, READ_CONSTANT());
                 break;
-            }
-            case OP_CONSTANT_LONG: {
-                Value constant = READ_CONSTANT_LONG();
-                vm_stack_push(vm, constant);
+            case OP_CONSTANT_LONG:
+                vm_stack_push(vm, READ_CONSTANT_LONG());
                 break;
-            }
+            case OP_NEGATE:
+                vm_stack_push(vm, -vm_stack_pop(vm));
+                break;
             case OP_RETURN:
                 return INTERPRET_OK;
         }

@@ -47,12 +47,14 @@ int disassemble_opcode(Chunk *chunk, int offset) {
 
     uint8_t opcode = chunk->code[offset];
     switch (opcode) {
-        case OP_RETURN:
-            return simple_opcode("OP_RETURN", offset);
         case OP_CONSTANT:
             return constant_opcode("OP_CONSTANT", chunk, offset);
         case OP_CONSTANT_LONG:
             return constant_long_opcode("OP_CONSTANT_LONG", chunk, offset);
+        case OP_NEGATE:
+            return simple_opcode("OP_NEGATE", offset);
+        case OP_RETURN:
+            return simple_opcode("OP_RETURN", offset);
         default:
             printf("unknown opcode: %" PRIu8 "\n", opcode);
             return offset + 1;
