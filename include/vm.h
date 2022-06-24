@@ -26,6 +26,6 @@ void vm_free(VM *vm);
 void vm_stack_push(VM *vm, Value value);
 Value vm_stack_pop(VM *vm);
 
-InterpretResult vm_interpret(VM *vm, Chunk *chunk);
+InterpretResult vm_interpret(VM *vm, const char *source);
 
 #endif

@@ -75,9 +75,6 @@ static InterpretResult run(VM *vm) {
 #undef READ_BYTE
 }
 
-InterpretResult vm_interpret(VM *vm, Chunk *chunk) {
-    vm->chunk = chunk;
-    vm->ip = chunk->code;
-
-    return run(vm);
+InterpretResult vm_interpret(VM *vm, const char *source) {
+    return INTERPRET_OK;
 }
