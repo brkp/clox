@@ -10,6 +10,7 @@ static int simple_opcode(const char *name, int offset) {
 
 static int constant_opcode(const char *name, Chunk *chunk, int offset) {
     uint8_t constant = chunk->code[offset + 1];
+
     printf("%-16s %4" PRIu8 " '", name, constant);
     value_print(chunk->constants.values[constant]);
     printf("'\n");
@@ -18,7 +19,9 @@ static int constant_opcode(const char *name, Chunk *chunk, int offset) {
 }
 
 static int constant_long_opcode(const char *name, Chunk *chunk, int offset) {
-    uint16_t constant = chunk->code[offset + 1] << 8 | chunk->code[offset + 2];
+    uint16_t constant = chunk->code[offset + 1] << 8 | \
+                        chunk->code[offset + 2];
+
     printf("%-16s %4" PRIu16 " '", name, constant);
     value_print(chunk->constants.values[constant]);
     printf("'\n");
@@ -36,6 +39,7 @@ void disassemble_chunk(Chunk *chunk, const char *name) {
 
 int disassemble_opcode(Chunk *chunk, int offset) {
     printf("%04d ", offset);
+
     if (offset > 0 && chunk->line[offset] == chunk->line[offset - 1])
         printf("   | ");
     else
