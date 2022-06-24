@@ -12,7 +12,7 @@ endif
 inc = include_directories('include')
 src = []
 
-foreach s: ['main', 'chunk', 'memory', 'debug', 'value']
+foreach s: ['main', 'chunk', 'memory', 'debug', 'value', 'vm']
   src += 'src' / (s + '.c' )
 endforeach
 
