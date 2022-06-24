@@ -4,8 +4,23 @@
 #include "chunk.h"
 #include "value.h"
 
-void vm_init(VM *vm) {}
+static void reset_stack(VM *vm) {
+    vm->sp = vm->stack;
+}
+
+void vm_init(VM *vm) {
+    reset_stack(vm);
+}
+
 void vm_free(VM *vm) {}
+
+void vm_stack_push(VM *vm, Value value) {
+    *(vm->sp++) = value;
+}
+
+Value vm_stack_pop(VM *vm) {
+    return *(--vm->sp);
+}
 
 static InterpretResult run(VM *vm) {
 #define READ_BYTE() (*vm->ip++)
@@ -14,6 +29,9 @@ static InterpretResult run(VM *vm) {
     (vm->chunk->constants.values[READ_BYTE() << 8 | READ_BYTE()])
 
     for (;;) {
+#ifdef DEBUG_TRACE_EXECUTION
+        disassemble_opcode(vm->chunk, (int)(vm->ip - vm->chunk->code));
+#endif
         uint8_t instruction;
         switch(instruction = READ_BYTE()) {
             case OP_CONSTANT: {
