@@ -12,6 +12,11 @@ static bool is_digit(char c) {
     return c >= '0' && c <= '9';
 }
 
+static bool is_alpha(char c) {
+    return (c >= 'a' && c <= 'z') ||
+           (c >= 'A' && c <= 'Z') || c == '_';
+}
+
 static bool is_at_end(Scanner *scanner) {
     return *scanner->current == '\0';
 }
@@ -82,7 +87,7 @@ static void skip_whitespace(Scanner *scanner) {
     }
 }
 
-Token scan_string(Scanner *scanner, char quote) {
+static Token scan_string(Scanner *scanner, char quote) {
     while (peek(scanner) != quote && !is_at_end(scanner)) {
         if (peek(scanner) == '\n')
             scanner->line++;
@@ -97,7 +102,7 @@ Token scan_string(Scanner *scanner, char quote) {
     return make_token(scanner, TOKEN_STRING);
 }
 
-Token scan_number(Scanner *scanner) {
+static Token scan_number(Scanner *scanner) {
     while (is_digit(peek(scanner)))
         advance(scanner);
 
@@ -111,6 +116,17 @@ Token scan_number(Scanner *scanner) {
     return make_token(scanner, TOKEN_NUMBER);
 }
 
+static TokenType identifier_type(Scanner *scanner) {
+    return TOKEN_IDENTIFIER;
+}
+
+static Token scan_identifier(Scanner *scanner) {
+    while (is_alpha(peek(scanner)) || is_digit(peek(scanner)))
+        advance(scanner);
+
+    return make_token(scanner, identifier_type(scanner));
+}
+
 Token scanner_scan_token(Scanner *scanner) {
     skip_whitespace(scanner);
     scanner->start = scanner->current;
@@ -121,6 +137,7 @@ Token scanner_scan_token(Scanner *scanner) {
     char c = advance(scanner);
 
     if (is_digit(c)) return scan_number(scanner);
+    if (is_alpha(c)) return scan_identifier(scanner);
 
     switch (c) {
         case '(': return make_token(scanner, TOKEN_LEFT_PAREN);
