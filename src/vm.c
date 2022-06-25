@@ -2,6 +2,7 @@
 
 #include "vm.h"
 #include "debug.h"
+#include "compiler.h"
 
 static void reset_stack(VM *vm) {
     vm->sp = vm->stack;
@@ -76,5 +77,6 @@ static InterpretResult run(VM *vm) {
 }
 
 InterpretResult vm_interpret(VM *vm, const char *source) {
+    compile(source);
     return INTERPRET_OK;
 }
