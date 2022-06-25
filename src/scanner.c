@@ -8,6 +8,10 @@ void scanner_init(Scanner *scanner, const char *source) {
     scanner->current = source;
 }
 
+static bool is_digit(char c) {
+    return c >= '0' && c <= '9';
+}
+
 static bool is_at_end(Scanner *scanner) {
     return *scanner->current == '\0';
 }
@@ -93,15 +97,32 @@ Token scan_string(Scanner *scanner, char quote) {
     return make_token(scanner, TOKEN_STRING);
 }
 
+Token scan_number(Scanner *scanner) {
+    while (is_digit(peek(scanner)))
+        advance(scanner);
+
+    if (peek(scanner) == '.' && is_digit(peek_next(scanner))) {
+        do {
+            advance(scanner);
+        }
+        while (is_digit(peek(scanner)));
+    }
+
+    return make_token(scanner, TOKEN_NUMBER);
+}
+
 Token scanner_scan_token(Scanner *scanner) {
-    char c;
     skip_whitespace(scanner);
     scanner->start = scanner->current;
 
     if (is_at_end(scanner))
         return make_token(scanner, TOKEN_EOF);
 
-    switch (c = advance(scanner)) {
+    char c = advance(scanner);
+
+    if (is_digit(c)) return scan_number(scanner);
+
+    switch (c) {
         case '(': return make_token(scanner, TOKEN_LEFT_PAREN);
         case ')': return make_token(scanner, TOKEN_RIGHT_PAREN);
         case '{': return make_token(scanner, TOKEN_LEFT_BRACE);
