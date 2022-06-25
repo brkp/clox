@@ -3,7 +3,7 @@
 #include "scanner.h"
 
 void scanner_init(Scanner *scanner, const char *source) {
-    scanner->line = 0;
+    scanner->line = 1;
     scanner->start = source;
     scanner->current = source;
 }
@@ -24,8 +24,15 @@ static bool match(Scanner *scanner, char expected) {
     return true;
 }
 
-static char peek(Scanner *scanner, int n) {
-    return *(scanner->current + n - 1);
+static char peek(Scanner *scanner) {
+    return *scanner->current;
+}
+
+static char peek_next(Scanner *scanner) {
+    if (is_at_end(scanner))
+        return '\0';
+
+    return scanner->current[1];
 }
 
 static Token make_token(Scanner *scanner, TokenType type) {
@@ -48,7 +55,7 @@ static Token error_token(Scanner *scanner, const char *message) {
 
 static void skip_whitespace(Scanner *scanner) {
     for (;;) {
-        switch (peek(scanner, 1)) {
+        switch (peek(scanner)) {
             case ' ' :
             case '\t':
             case '\r':
@@ -58,20 +65,43 @@ static void skip_whitespace(Scanner *scanner) {
                 scanner->line++;
                 advance(scanner);
                 break;
+            case '/':
+                if (peek_next(scanner) != '/')
+                    return;
+
+                while (peek(scanner) != '\n' && !is_at_end(scanner))
+                    advance(scanner);
+                break;
             default:
                 return;
         }
     }
 }
 
+Token scan_string(Scanner *scanner, char quote) {
+    while (peek(scanner) != quote && !is_at_end(scanner)) {
+        if (peek(scanner) == '\n')
+            scanner->line++;
+
+        advance(scanner);
+    }
+
+    if (is_at_end(scanner))
+        return error_token(scanner, "unterminated string");
+
+    advance(scanner);
+    return make_token(scanner, TOKEN_STRING);
+}
+
 Token scanner_scan_token(Scanner *scanner) {
+    char c;
     skip_whitespace(scanner);
     scanner->start = scanner->current;
 
     if (is_at_end(scanner))
         return make_token(scanner, TOKEN_EOF);
 
-    switch (advance(scanner)) {
+    switch (c = advance(scanner)) {
         case '(': return make_token(scanner, TOKEN_LEFT_PAREN);
         case ')': return make_token(scanner, TOKEN_RIGHT_PAREN);
         case '{': return make_token(scanner, TOKEN_LEFT_BRACE);
@@ -96,6 +126,10 @@ Token scanner_scan_token(Scanner *scanner) {
         case '>':
             return make_token(
                 scanner, match(scanner, '=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER);
+
+        case '\'':
+        case '"' :
+            return scan_string(scanner, c);
     }
 
     return error_token(scanner, "unexpected character");
