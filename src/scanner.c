@@ -24,6 +24,10 @@ static bool match(Scanner *scanner, char expected) {
     return true;
 }
 
+static char peek(Scanner *scanner, int n) {
+    return *(scanner->current + n - 1);
+}
+
 static Token make_token(Scanner *scanner, TokenType type) {
     return (Token){
         .type   = type,
@@ -42,14 +46,32 @@ static Token error_token(Scanner *scanner, const char *message) {
     };
 }
 
+static void skip_whitespace(Scanner *scanner) {
+    for (;;) {
+        switch (peek(scanner, 1)) {
+            case ' ' :
+            case '\t':
+            case '\r':
+                advance(scanner);
+                break;
+            case '\n':
+                scanner->line++;
+                advance(scanner);
+                break;
+            default:
+                return;
+        }
+    }
+}
+
 Token scanner_scan_token(Scanner *scanner) {
+    skip_whitespace(scanner);
     scanner->start = scanner->current;
 
     if (is_at_end(scanner))
         return make_token(scanner, TOKEN_EOF);
 
-    char c = advance(scanner);
-    switch (c) {
+    switch (advance(scanner)) {
         case '(': return make_token(scanner, TOKEN_LEFT_PAREN);
         case ')': return make_token(scanner, TOKEN_RIGHT_PAREN);
         case '{': return make_token(scanner, TOKEN_LEFT_BRACE);
