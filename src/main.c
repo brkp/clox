@@ -11,7 +11,7 @@ static char *read_file(const char *path) {
     FILE *file = fopen(path, "r");
     if (file == NULL) {
         fprintf(stderr, "couldn't open file '%s'\n", path);
-        exit(74);
+        return NULL;
     }
 
     fseek(file, 0L, SEEK_END);
@@ -21,13 +21,15 @@ static char *read_file(const char *path) {
     char *buffer = malloc(file_size + 1);
     if (buffer == NULL) {
         fprintf(stderr, "not enough memory to read '%s'\n", path);
-        exit(74);
+        fclose(file);
+        return NULL;
     }
 
     size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
     if (bytes_read < file_size) {
         fprintf(stderr, "couldn't read file '%s'\n", path);
-        exit(74);
+        fclose(file); free(buffer);
+        return NULL;
     }
     buffer[bytes_read] = '\0';
 
@@ -44,6 +46,9 @@ static int run_file(const char *path) {
     vm_init(&vm);
 
     char *source = read_file(path);
+    if (source == NULL)
+        exit(74);
+
     InterpretResult result = vm_interpret(&vm, source);
 
     free(source);
