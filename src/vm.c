@@ -77,6 +77,5 @@ static InterpretResult run(VM *vm) {
 }
 
 InterpretResult vm_interpret(VM *vm, const char *source) {
-    compile(source);
     return INTERPRET_OK;
 }
