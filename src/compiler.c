@@ -10,6 +10,8 @@ typedef struct {
 
     bool had_error;
     bool panic_mode;
+
+    Chunk *compiling_chunk;
 } Parser;
 
 static void error_at(Parser *parser, Token *token, const char *message) {
@@ -57,16 +59,27 @@ static void consume(Scanner *scanner, Parser *parser, TokenType type, const char
     error_at_current(parser, message);
 }
 
-bool compile(const char *source, Chunk *chunk) {
-    Parser parser;
-    Scanner scanner;
+static void emit_byte(Parser *parser, uint8_t byte) {
+    chunk_push(parser->compiling_chunk, byte, parser->prev.line);
+}
 
+static void emit_return(Parser *parser) {
+    emit_byte(parser, OP_RETURN);
+}
+
+bool compile(const char *source, Chunk *chunk) {
+    Scanner scanner;
     scanner_init(&scanner, source);
+
+    Parser parser;
     parser.had_error = false;
     parser.panic_mode = false;
+    parser.compiling_chunk = chunk;
 
     advance(&scanner, &parser);
     consume(&scanner, &parser, TOKEN_EOF, "Expect end of expression.");
+
+    emit_return(&parser);
 
     return !parser.had_error;
 }
