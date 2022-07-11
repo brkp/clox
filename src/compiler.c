@@ -3,6 +3,7 @@
 
 #include "compiler.h"
 #include "debug.h"
+#include "value.h"
 #include "scanner.h"
 
 typedef enum {
@@ -127,7 +128,7 @@ static void grouping(Parser *parser) {
 static void number(Parser *parser) {
     chunk_push_constant(
         parser->compiling_chunk,
-        strtod(parser->prev.start, NULL), parser->prev.line);
+        NUMBER_VAL(strtod(parser->prev.start, NULL)), parser->prev.line);
 }
 
 static void unary(Parser *parser) {
