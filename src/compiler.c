@@ -122,7 +122,6 @@ static void binary(Parser *parser) {
 }
 
 static void literal(Parser *parser) {
-    printf("i got called\n");
     switch (parser->prev.type) {
         case TOKEN_NIL: emit_byte(parser, OP_NIL); break;
         case TOKEN_TRUE: emit_byte(parser, OP_TRUE); break;
