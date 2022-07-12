@@ -6,6 +6,10 @@
 #include "debug.h"
 #include "compiler.h"
 
+static bool is_falsy(Value value) {
+    return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
 static void reset_stack(VM *vm) {
     vm->sp = vm->stack;
 }
@@ -80,6 +84,9 @@ static InterpretResult run(VM *vm) {
                 vm_stack_push(vm, READ_CONSTANT_LONG());
                 break;
 
+            case OP_NOT:
+                vm_stack_push(vm, BOOL_VAL(is_falsy(vm_stack_pop(vm))));
+                break;
             case OP_NIL:   vm_stack_push(vm, NIL_VAL); break;
             case OP_TRUE:  vm_stack_push(vm, BOOL_VAL(true)); break;
             case OP_FALSE: vm_stack_push(vm, BOOL_VAL(false)); break;

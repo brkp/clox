@@ -51,6 +51,8 @@ int disassemble_opcode(Chunk *chunk, int offset) {
             return constant_opcode("OP_CONSTANT", chunk, offset);
         case OP_CONSTANT_LONG:
             return constant_long_opcode("OP_CONSTANT_LONG", chunk, offset);
+        case OP_NOT:
+            return simple_opcode("OP_NOT", offset);
         case OP_NIL:
             return simple_opcode("OP_NIL", offset);
         case OP_TRUE:

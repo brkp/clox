@@ -116,7 +116,7 @@ static void binary(Parser *parser) {
         case TOKEN_SLASH:
             emit_byte(parser, OP_DIVIDE); break;
 
-        default:
+        default: // unreachable
             return;
     }
 }
@@ -126,7 +126,8 @@ static void literal(Parser *parser) {
         case TOKEN_NIL: emit_byte(parser, OP_NIL); break;
         case TOKEN_TRUE: emit_byte(parser, OP_TRUE); break;
         case TOKEN_FALSE: emit_byte(parser, OP_FALSE); break;
-        default:
+
+        default: // unreachable
             return;
     }
 }
@@ -147,10 +148,10 @@ static void unary(Parser *parser) {
     parse_precedence(parser, PREC_UNARY);
 
     switch (operator) {
-        case TOKEN_MINUS:
-            emit_byte(parser, OP_NEGATE);
-            break;
-        default:
+        case TOKEN_BANG:  emit_byte(parser, OP_NOT); break;
+        case TOKEN_MINUS: emit_byte(parser, OP_NEGATE); break;
+
+        default: // unreachable
             return;
     }
 }
@@ -167,7 +168,7 @@ ParseRule RULES[] = {
     [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
     [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
     [TOKEN_STAR]          = {NULL,     binary, PREC_FACTOR},
-    [TOKEN_BANG]          = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_BANG]          = {unary,    NULL,   PREC_NONE},
     [TOKEN_BANG_EQUAL]    = {NULL,     NULL,   PREC_NONE},
     [TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_EQUAL_EQUAL]   = {NULL,     NULL,   PREC_NONE},
