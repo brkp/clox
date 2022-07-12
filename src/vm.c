@@ -77,16 +77,17 @@ static InterpretResult run(VM *vm) {
 #endif
         uint8_t instruction;
         switch(instruction = READ_BYTE()) {
-            case OP_CONSTANT:
-                vm_stack_push(vm, READ_CONSTANT());
-                break;
-            case OP_CONSTANT_LONG:
-                vm_stack_push(vm, READ_CONSTANT_LONG());
-                break;
+            case OP_CONSTANT: vm_stack_push(vm, READ_CONSTANT()); break;
+            case OP_CONSTANT_LONG: vm_stack_push(vm, READ_CONSTANT_LONG()); break;
 
-            case OP_NOT:
-                vm_stack_push(vm, BOOL_VAL(is_falsy(vm_stack_pop(vm))));
+            case OP_EQUAL: {
+                Value b = vm_stack_pop(vm);
+                Value a = vm_stack_pop(vm);
+                vm_stack_push(vm, BOOL_VAL(values_equal(a, b)));
                 break;
+            }
+
+            case OP_NOT:   vm_stack_push(vm, BOOL_VAL(is_falsy(vm_stack_pop(vm)))); break;
             case OP_NIL:   vm_stack_push(vm, NIL_VAL); break;
             case OP_TRUE:  vm_stack_push(vm, BOOL_VAL(true)); break;
             case OP_FALSE: vm_stack_push(vm, BOOL_VAL(false)); break;
@@ -95,6 +96,8 @@ static InterpretResult run(VM *vm) {
             case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
             case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
             case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
+            case OP_GREATER:  BINARY_OP(BOOL_VAL,   >); break;
+            case OP_LESS:     BINARY_OP(BOOL_VAL,   <); break;
 
             case OP_NEGATE: {
                 if (!IS_NUMBER(vm_stack_peek(vm, 0))) {

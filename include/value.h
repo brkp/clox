@@ -39,5 +39,6 @@ void value_array_free(ValueArray *array);
 void value_array_push(ValueArray *array, Value value);
 
 void value_print(Value value);
+bool values_equal(Value a, Value b);
 
 #endif
