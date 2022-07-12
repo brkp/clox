@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "compiler.h"
+#include "chunk.h"
 #include "debug.h"
 #include "value.h"
 #include "scanner.h"
@@ -120,6 +121,17 @@ static void binary(Parser *parser) {
     }
 }
 
+static void literal(Parser *parser) {
+    printf("i got called\n");
+    switch (parser->prev.type) {
+        case TOKEN_NIL: emit_byte(parser, OP_NIL); break;
+        case TOKEN_TRUE: emit_byte(parser, OP_TRUE); break;
+        case TOKEN_FALSE: emit_byte(parser, OP_FALSE); break;
+        default:
+            return;
+    }
+}
+
 static void grouping(Parser *parser) {
     expression(parser);
     consume(parser, TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
@@ -170,17 +182,17 @@ ParseRule RULES[] = {
     [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_FALSE]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},
     [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_FN]            = {NULL,     NULL,   PREC_NONE},
     [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_NIL]           = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
     [TOKEN_OR]            = {NULL,     NULL,   PREC_NONE},
     [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
     [TOKEN_SUPER]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_THIS]          = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_TRUE]          = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_TRUE]          = {literal,  NULL,   PREC_NONE},
     [TOKEN_LET]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
