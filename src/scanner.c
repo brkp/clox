@@ -147,7 +147,7 @@ static TokenType identifier_type(Scanner *scanner) {
         case 's': return check_keyword(scanner, 1, 4, "uper", TOKEN_SUPER);
         case 't':
             if (scanner->current - scanner->start > 1) {
-                switch (scanner->start[2]) {
+                switch (scanner->start[1]) {
                     case 'h': return check_keyword(scanner, 2, 2, "is", TOKEN_THIS);
                     case 'r': return check_keyword(scanner, 2, 2, "ue", TOKEN_TRUE);
                 }
