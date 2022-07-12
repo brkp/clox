@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "value.h"
 #include "vm.h"
 #include "debug.h"
 #include "compiler.h"
@@ -48,7 +49,7 @@ static InterpretResult run(VM *vm) {
     do {                                                                       \
         if (!IS_NUMBER(vm_stack_peek(vm, 0)) ||                                \
             !IS_NUMBER(vm_stack_peek(vm, 1))) {                                \
-            runtime_error(vm, "Operators must be numbers.");                   \
+            runtime_error(vm, "Operands must be numbers.");                    \
             return INTERPRET_RUNTIME_ERROR;                                    \
         }                                                                      \
         double b = AS_NUMBER(vm_stack_pop(vm));                                \
@@ -78,6 +79,10 @@ static InterpretResult run(VM *vm) {
             case OP_CONSTANT_LONG:
                 vm_stack_push(vm, READ_CONSTANT_LONG());
                 break;
+
+            case OP_NIL:   vm_stack_push(vm, NIL_VAL); break;
+            case OP_TRUE:  vm_stack_push(vm, BOOL_VAL(true)); break;
+            case OP_FALSE: vm_stack_push(vm, BOOL_VAL(false)); break;
 
             case OP_ADD:      BINARY_OP(NUMBER_VAL, +); break;
             case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
