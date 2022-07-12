@@ -15,7 +15,7 @@ src = []
 
 c_files = [
   'main', 'chunk', 'compiler', 'memory', 
-  'debug', 'value', 'vm', 'scanner']
+  'debug', 'value', 'object', 'vm', 'scanner']
 
 foreach s: c_files
   src += 'src' / (s + '.c' )
