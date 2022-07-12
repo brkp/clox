@@ -133,7 +133,7 @@ static TokenType identifier_type(Scanner *scanner) {
         case 'f':
             if (scanner->current - scanner->start > 1) {
                 switch (scanner->start[1]) {
-                    case 'a': return check_keyword(scanner, 2, 3, "lse", TOKEN_ELSE);
+                    case 'a': return check_keyword(scanner, 2, 3, "lse", TOKEN_FALSE);
                     case 'o': return check_keyword(scanner, 2, 1, "r", TOKEN_FOR);
                     case 'n': return TOKEN_FN;
                 }
