@@ -2,4 +2,7 @@
 build/
 
 # clangd
-.cache
+.cache/
+.clang-format
+
+.ignore/
