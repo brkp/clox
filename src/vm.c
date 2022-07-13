@@ -1,13 +1,29 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
 
+#include "memory.h"
 #include "value.h"
+#include "object.h"
 #include "vm.h"
 #include "debug.h"
 #include "compiler.h"
 
 static bool is_falsy(Value value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
+static void concatenate(VM *vm) {
+    ObjString *b = AS_STRING(vm_stack_pop(vm));
+    ObjString *a = AS_STRING(vm_stack_pop(vm));
+
+    int length = a->len + b->len;
+    char *data = ALLOCATE(char, length + 1);
+    memcpy(data, a->data, a->len);
+    memcpy(data + a->len, b->data, b->len);
+    data[length] = '\0';
+
+    vm_stack_push(vm, OBJ_VAL(take_string(data, length)));
 }
 
 static void reset_stack(VM *vm) {
@@ -92,7 +108,21 @@ static InterpretResult run(VM *vm) {
             case OP_TRUE:  vm_stack_push(vm, BOOL_VAL(true)); break;
             case OP_FALSE: vm_stack_push(vm, BOOL_VAL(false)); break;
 
-            case OP_ADD:      BINARY_OP(NUMBER_VAL, +); break;
+            case OP_ADD: {
+                if (IS_STRING(vm_stack_peek(vm, 0)) && IS_STRING(vm_stack_peek(vm, 1))) {
+                    concatenate(vm);
+                }
+                else if (IS_NUMBER(vm_stack_peek(vm, 0)) && IS_NUMBER(vm_stack_peek(vm, 1))) {
+                    double b = AS_NUMBER(vm_stack_pop(vm));
+                    double a = AS_NUMBER(vm_stack_pop(vm));
+                    vm_stack_push(vm, NUMBER_VAL(a + b));
+                }
+                else {
+                    runtime_error(vm, "Operands must be two numbers or strings.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
             case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
             case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
             case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;

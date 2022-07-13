@@ -18,6 +18,7 @@
 #define OBJ_VAL(object)   ((Value){VAL_OBJ,    { .obj = (Obj *)object }})
 
 typedef struct Obj Obj;
+typedef struct ObjString ObjString;
 
 typedef enum {
     VAL_BOOL,
@@ -46,6 +47,7 @@ void value_array_free(ValueArray *array);
 void value_array_push(ValueArray *array, Value value);
 
 void value_print(Value value);
+void object_print(Value value);
 bool values_equal(Value a, Value b);
 
 #endif

@@ -4,6 +4,7 @@
 #include "compiler.h"
 #include "chunk.h"
 #include "debug.h"
+#include "object.h"
 #include "value.h"
 #include "scanner.h"
 
@@ -155,6 +156,15 @@ static void number(Parser *parser) {
         NUMBER_VAL(strtod(parser->prev.start, NULL)), parser->prev.line);
 }
 
+static void string(Parser *parser) {
+    chunk_push_constant(
+        parser->compiling_chunk,
+        OBJ_VAL(copy_string(
+                parser->prev.start + 1,
+                parser->prev.length - 2)),
+        parser->prev.line);
+}
+
 static void unary(Parser *parser) {
     TokenType operator = parser->prev.type;
     parse_precedence(parser, PREC_UNARY);
@@ -189,7 +199,7 @@ ParseRule RULES[] = {
     [TOKEN_LESS]          = {NULL,     binary, PREC_COMPARISON},
     [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
     [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_STRING]        = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
     [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
     [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
