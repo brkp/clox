@@ -3,7 +3,8 @@
 
 #include "common.h"
 #include "chunk.h"
+#include "vm.h"
 
-bool compile(const char *source, Chunk *chunk);
+bool compile(const char *source, VM *vm, Chunk *chunk);
 
 #endif

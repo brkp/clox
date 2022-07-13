@@ -2,6 +2,7 @@
 #define clox_object_h
 
 #include "common.h"
+#include "vm.h"
 #include "value.h"
 
 #define OBJ_TYPE(value)     (AS_OBJ(value)->type)
@@ -17,6 +18,7 @@ typedef enum {
 
 struct Obj {
     ObjType type;
+    struct Obj *next;
 };
 
 struct ObjString {
@@ -25,8 +27,8 @@ struct ObjString {
     char *data;
 };
 
-ObjString *take_string(char *data, int len);
-ObjString *copy_string(const char *data, int len);
+ObjString *take_string(VM *vm, char *data, int len);
+ObjString *copy_string(VM *vm, const char *data, int len);
 
 static inline is_obj_type(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;

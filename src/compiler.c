@@ -27,6 +27,7 @@ typedef struct {
     Token curr;
     bool had_error;
     bool panic_mode;
+    VM *vm;
     Chunk *compiling_chunk;
     Scanner scanner;
 } Parser;
@@ -39,9 +40,10 @@ typedef struct {
     Precedence precedence;
 } ParseRule;
 
-static void parser_init(Parser *parser, Chunk *chunk) {
+static void parser_init(Parser *parser, VM *vm, Chunk *chunk) {
     parser->had_error = false;
     parser->panic_mode = false;
+    parser->vm = vm;
     parser->compiling_chunk = chunk;
 }
 
@@ -160,6 +162,7 @@ static void string(Parser *parser) {
     chunk_push_constant(
         parser->compiling_chunk,
         OBJ_VAL(copy_string(
+                parser->vm,
                 parser->prev.start + 1,
                 parser->prev.length - 2)),
         parser->prev.line);
@@ -246,9 +249,9 @@ static void expression(Parser *parser) {
     parse_precedence(parser, PREC_ASSIGNMENT);
 }
 
-bool compile(const char *source, Chunk *chunk) {
+bool compile(const char *source, VM *vm, Chunk *chunk) {
     Parser parser;
-    parser_init(&parser, chunk);
+    parser_init(&parser, vm, chunk);
     scanner_init(&parser.scanner, source);
 
     advance(&parser);
