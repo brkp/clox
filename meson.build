@@ -14,7 +14,7 @@ inc = include_directories('include')
 src = []
 
 c_files = [
-  'main', 'chunk', 'compiler', 'memory', 
+  'main', 'chunk', 'compiler', 'memory', 'utils',
   'debug', 'value', 'object', 'vm', 'scanner']
 
 foreach s: c_files
