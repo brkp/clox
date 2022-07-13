@@ -1,2 +1,3 @@
 - [ ] write a generic array structure to replace repeating implementations of dynamic arrays
 - [ ] use run-length encoding of the line numbers to minimize the memory usage
+- [ ] explore the topic `flexible array members` 
