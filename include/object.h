@@ -25,12 +25,13 @@ struct ObjString {
     Obj obj;
     int len;
     char *data;
+    uint32_t hash;
 };
 
 ObjString *take_string(VM *vm, char *data, int len);
 ObjString *copy_string(VM *vm, const char *data, int len);
 
-static inline is_obj_type(Value value, ObjType type) {
+static inline bool is_obj_type(Value value, ObjType type) {
     return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
 

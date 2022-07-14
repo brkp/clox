@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "utils.h"
 #include "object.h"
 #include "memory.h"
 
@@ -14,20 +15,21 @@ static Obj *allocate_obj(VM *vm, size_t size, ObjType object_type) {
     return object;
 }
 
-static ObjString *allocate_string(VM *vm, char *data, int len) {
+static ObjString *allocate_string(VM *vm, char *data, int len, uint32_t hash) {
     ObjString *string = ALLOCATE_OBJ(vm, ObjString, OBJ_STRING);
     string->len = len;
     string->data = data;
+    string->hash = hash;
     return string;
 }
 
 ObjString *take_string(VM *vm, char *data, int len) {
-    return allocate_string(vm, data, len);
+    return allocate_string(vm, data, len, hash_string(data, len));
 }
 
 ObjString *copy_string(VM *vm, const char *data, int len) {
     char *heap_chars = ALLOCATE(char, len + 1);
     memcpy(heap_chars, data, len);
     heap_chars[len] = '\0';
-    return allocate_string(vm, heap_chars, len);
+    return allocate_string(vm, heap_chars, len, hash_string(heap_chars, len));
 }
