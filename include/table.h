@@ -19,6 +19,8 @@ void table_init(Table *table);
 void table_free(Table *table);
 void table_copy_from(Table *from, Table *to);
 
+bool table_get(Table *table, ObjString *key, Value *value);
 bool table_set(Table *table, ObjString *key, Value value);
+bool table_del(Table *table, ObjString *key);
 
 #endif

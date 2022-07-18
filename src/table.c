@@ -17,10 +17,22 @@ void table_free(Table *table) {
 
 static Entry *find_entry(Entry *entries, int cap, ObjString *key) {
     uint32_t index = key->hash % cap;
+    Entry *tombstone = NULL;
 
     for (;;) {
         Entry *entry = &entries[index];
         if (entry->key == key || entry->key == NULL) {
+            return entry;
+        }
+        if (entry->key == NULL) {
+            if (IS_NIL(entry->value)) {
+                return tombstone == NULL ? entry : tombstone;
+            }
+            else {
+                if (tombstone == NULL) tombstone = entry;
+            }
+        }
+        else if (entry->key == key) {
             return entry;
         }
         index = (index + 1) % cap;
@@ -57,6 +69,16 @@ static void adjust_capacity(Table *table, int capacity) {
     table->entries = entries;
 }
 
+bool table_get(Table *table, ObjString *key, Value *value) {
+    if (table->len == 0) return false;
+
+    Entry *entry = find_entry(table->entries, table->cap, key);
+    if (entry->key == NULL) return false;
+
+    *value = entry->value;
+    return true;
+}
+
 bool table_set(Table *table, ObjString *key, Value value) {
     if (table->len + 1 > table->cap * TABLE_MAX_LOAD) {
         int new_cap = GROW_CAPACITY(table->cap);
@@ -65,10 +87,23 @@ bool table_set(Table *table, ObjString *key, Value value) {
 
     Entry *entry = find_entry(table->entries, table->cap, key);
     bool is_new_key = entry->key == NULL;
-    if (is_new_key) table->len++;
+    if (is_new_key && IS_NIL(entry->value)) table->len++;
 
     entry->key = key;
     entry->value = value;
 
     return is_new_key;
+}
+
+bool table_del(Table *table, ObjString *key) {
+    if (table->len == 0) return false;
+
+    Entry *entry = find_entry(table->entries, table->cap, key);
+    if (entry->key == NULL) return false;
+
+    // tombstone
+    entry->key = NULL;
+    entry->value = BOOL_VAL(true);
+
+    return true;
 }
