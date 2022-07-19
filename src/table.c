@@ -59,7 +59,7 @@ static void adjust_capacity(Table *table, int capacity) {
 
     for (int i = 0; i < table->cap; i++) {
         Entry *entry = &table->entries[i];
-        if (entry == NULL) continue;
+        if (entry->key == NULL) continue;
 
         Entry *dest = find_entry(entries, capacity, entry->key);
         dest->key = entry->key;
