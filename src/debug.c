@@ -75,6 +75,8 @@ int disassemble_opcode(Chunk *chunk, int offset) {
             return simple_opcode("OP_DIVIDE", offset);
         case OP_NEGATE:
             return simple_opcode("OP_NEGATE", offset);
+        case OP_PRINT:
+            return simple_opcode("OP_PRINT", offset);
         case OP_RETURN:
             return simple_opcode("OP_RETURN", offset);
         default:

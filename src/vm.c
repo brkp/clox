@@ -142,6 +142,11 @@ static InterpretResult run(VM *vm) {
                 vm_stack_push(vm, NUMBER_VAL(-AS_NUMBER(vm_stack_pop(vm))));
                 break;
             }
+            case OP_PRINT: {
+                value_print(vm_stack_pop(vm));
+                printf("\n");
+                break;
+            }
             case OP_RETURN:
                 return INTERPRET_OK;
         }

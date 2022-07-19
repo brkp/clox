@@ -92,6 +92,19 @@ static void consume(Parser *parser, TokenType type, const char *message) {
     error_at_current(parser, message);
 }
 
+static bool check(Parser *parser, TokenType type) {
+    return parser->curr.type == type;
+}
+
+static bool match(Parser *parser, TokenType type) {
+    if (check(parser, type)) {
+        advance(parser);
+        return true;
+    }
+
+    return false;
+}
+
 static void emit_byte(Parser *parser, uint8_t byte) {
     chunk_push(parser->compiling_chunk, byte, parser->prev.line);
 }
@@ -101,6 +114,8 @@ static void emit_return(Parser *parser) {
 }
 
 static void expression(Parser *parser);
+static void statement(Parser *parser);
+static void declaration(Parser *parser);
 static ParseRule *get_rule(TokenType type);
 static void parse_precedence(Parser *parser, Precedence precedence);
 
@@ -249,14 +264,31 @@ static void expression(Parser *parser) {
     parse_precedence(parser, PREC_ASSIGNMENT);
 }
 
+static void print_statement(Parser *parser) {
+    expression(parser);
+    consume(parser, TOKEN_SEMICOLON, "Expect ';' after value.");
+    emit_byte(parser, OP_PRINT);
+}
+
+static void declaration(Parser *parser) {
+    statement(parser);
+}
+
+static void statement(Parser *parser) {
+    if (match(parser, TOKEN_PRINT)) {
+        print_statement(parser);
+    }
+}
+
 bool compile(const char *source, VM *vm, Chunk *chunk) {
     Parser parser;
     parser_init(&parser, vm, chunk);
     scanner_init(&parser.scanner, source);
 
     advance(&parser);
-    expression(&parser);
-    consume(&parser, TOKEN_EOF, "Expect end of expression.");
+    while (!match(&parser, TOKEN_EOF)) {
+        declaration(&parser);
+    }
 
     emit_return(&parser);
 
