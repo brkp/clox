@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "memory.h"
 #include "table.h"
 #include "value.h"
@@ -106,4 +108,26 @@ bool table_del(Table *table, ObjString *key) {
     entry->value = BOOL_VAL(true);
 
     return true;
+}
+
+ObjString *table_find_string(Table *table, const char *chars,
+        int length, uint32_t hash) {
+    if (table->len == 0) return NULL;
+
+    int index = hash % table->cap;
+
+    for (;;) {
+        Entry *entry = &table->entries[index];
+
+        if (entry->key == NULL) {
+            if (IS_NIL(entry->value)) return NULL;
+        }
+        else if (entry->key->len == length &&
+                 entry->key->hash == hash  &&
+                 memcmp(entry->key->data, chars, length) == 0) {
+            return entry->key;
+        }
+
+        index = (index + 1) % table->cap;
+    }
 }

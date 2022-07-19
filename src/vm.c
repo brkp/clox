@@ -45,9 +45,11 @@ static void runtime_error(VM *vm, const char *format, ...) {
 void vm_init(VM *vm) {
     reset_stack(vm);
     vm->objects = NULL;
+    table_init(&vm->strings);
 }
 
 void vm_free(VM *vm) {
+    table_free(&vm->strings);
     free_objects(vm->objects);
 }
 

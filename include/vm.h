@@ -4,6 +4,7 @@
 #include "common.h"
 #include "chunk.h"
 #include "value.h"
+#include "table.h"
 
 #define STACK_MAX 1024
 
@@ -13,6 +14,7 @@ typedef struct {
     uint8_t *ip;
     Value *sp;
     Obj *objects;
+    Table strings;
 } VM;
 
 typedef enum {
