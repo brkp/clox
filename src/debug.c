@@ -59,6 +59,8 @@ int disassemble_opcode(Chunk *chunk, int offset) {
             return simple_opcode("OP_TRUE", offset);
         case OP_FALSE:
             return simple_opcode("OP_FALSE", offset);
+        case OP_POP:
+            return simple_opcode("OP_POP", offset);
         case OP_EQUAL:
             return simple_opcode("OP_EQUAL", offset);
         case OP_GREATER:

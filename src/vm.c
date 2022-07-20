@@ -112,6 +112,7 @@ static InterpretResult run(VM *vm) {
             case OP_NIL:   vm_stack_push(vm, NIL_VAL); break;
             case OP_TRUE:  vm_stack_push(vm, BOOL_VAL(true)); break;
             case OP_FALSE: vm_stack_push(vm, BOOL_VAL(false)); break;
+            case OP_POP:   vm_stack_pop(vm); break;
 
             case OP_ADD: {
                 if (IS_STRING(vm_stack_peek(vm, 0)) && IS_STRING(vm_stack_peek(vm, 1))) {
