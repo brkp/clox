@@ -35,6 +35,7 @@ typedef struct {
 void chunk_init(Chunk *chunk);
 void chunk_free(Chunk *chunk);
 void chunk_push(Chunk *chunk, uint8_t byte, int line);
-void chunk_push_constant(Chunk *chunk, Value value, int line);
+
+uint16_t chunk_push_constant(Chunk *chunk, Value value, int line);
 
 #endif

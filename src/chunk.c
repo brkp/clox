@@ -30,7 +30,7 @@ void chunk_push(Chunk *chunk, uint8_t byte, int line) {
     chunk->len++;
 }
 
-void chunk_push_constant(Chunk *chunk, Value value, int line) {
+uint16_t chunk_push_constant(Chunk *chunk, Value value, int line) {
     value_array_push(&chunk->constants, value);
     int offset = chunk->constants.len - 1;
 
@@ -43,4 +43,6 @@ void chunk_push_constant(Chunk *chunk, Value value, int line) {
         chunk_push(chunk, OP_CONSTANT, line);
         chunk_push(chunk, offset, line);
     }
+
+    return (uint16_t)offset;
 }
