@@ -276,8 +276,37 @@ static void print_statement(Parser *parser) {
     emit_byte(parser, OP_PRINT);
 }
 
+static void synchronize(Parser *parser) {
+    parser->panic_mode = false;
+
+    while (parser->curr.type != TOKEN_EOF) {
+        if (parser->prev.type == TOKEN_SEMICOLON)
+            return;
+
+        switch (parser->prev.type) {
+            case TOKEN_CLASS:
+            case TOKEN_FN:
+            case TOKEN_LET:
+            case TOKEN_FOR:
+            case TOKEN_IF:
+            case TOKEN_WHILE:
+            case TOKEN_PRINT:
+            case TOKEN_RETURN:
+                return;
+
+            default:
+                ;
+        }
+
+        advance(parser);
+    }
+}
+
 static void declaration(Parser *parser) {
     statement(parser);
+
+    if (parser->panic_mode)
+        synchronize(parser);
 }
 
 static void statement(Parser *parser) {
