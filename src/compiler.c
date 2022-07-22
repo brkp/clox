@@ -260,8 +260,30 @@ static void parse_precedence(Parser *parser, Precedence precedence) {
     }
 }
 
+static uint16_t identifier_constant(Parser *parser) {
+    Token *name = &parser->prev;
+
+    return chunk_push_constant(
+        parser->compiling_chunk,
+        OBJ_VAL(copy_string(
+            parser->vm,
+            name->start,
+            name->length)),
+        name->line
+    );
+}
+
+static uint16_t parse_variable(Parser *parser, const char *message) {
+    consume(parser, TOKEN_IDENTIFIER, message);
+    return identifier_constant(parser);
+}
+
 static void expression(Parser *parser) {
     parse_precedence(parser, PREC_ASSIGNMENT);
+}
+
+static void var_declaration(Parser *parser) {
+    uint16_t global = parse_variable(parser, "Expect variable name.");
 }
 
 static void expression_statement(Parser *parser) {
@@ -303,7 +325,12 @@ static void synchronize(Parser *parser) {
 }
 
 static void declaration(Parser *parser) {
-    statement(parser);
+    if (match(parser, TOKEN_LET)) {
+        var_declaration(parser);
+    }
+    else {
+        statement(parser);
+    }
 
     if (parser->panic_mode)
         synchronize(parser);
