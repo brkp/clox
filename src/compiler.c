@@ -119,6 +119,19 @@ static void declaration(Parser *parser);
 static ParseRule *get_rule(TokenType type);
 static void parse_precedence(Parser *parser, Precedence precedence);
 
+static uint16_t identifier_constant(Parser *parser) {
+    Token *name = &parser->prev;
+
+    return chunk_push_constant(
+        parser->compiling_chunk,
+        OBJ_VAL(copy_string(
+            parser->vm,
+            name->start,
+            name->length)),
+        name->line
+    );
+}
+
 static void binary(Parser *parser) {
     TokenType operator_type = parser->prev.type;
     ParseRule *rule = get_rule(operator_type);
@@ -183,6 +196,24 @@ static void string(Parser *parser) {
         parser->prev.line);
 }
 
+static void named_variable(Parser *parser) {
+    uint16_t offset = identifier_constant(parser);
+
+    if (offset > 0xff) {
+        emit_byte(parser, OP_GET_GLOBAL_LONG);
+        emit_byte(parser, offset >> 0x8);
+        emit_byte(parser, offset & 0xff);
+    }
+    else {
+        emit_byte(parser, OP_GET_GLOBAL);
+        emit_byte(parser, offset & 0xff);
+    }
+}
+
+static void variable(Parser *parser) {
+    named_variable(parser);
+}
+
 static void unary(Parser *parser) {
     TokenType operator = parser->prev.type;
     parse_precedence(parser, PREC_UNARY);
@@ -216,7 +247,7 @@ ParseRule RULES[] = {
     [TOKEN_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
     [TOKEN_LESS]          = {NULL,     binary, PREC_COMPARISON},
     [TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
-    [TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_IDENTIFIER]    = {variable,     NULL,   PREC_NONE},
     [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
     [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
@@ -260,17 +291,8 @@ static void parse_precedence(Parser *parser, Precedence precedence) {
     }
 }
 
-static uint16_t identifier_constant(Parser *parser) {
-    Token *name = &parser->prev;
-
-    return chunk_push_constant(
-        parser->compiling_chunk,
-        OBJ_VAL(copy_string(
-            parser->vm,
-            name->start,
-            name->length)),
-        name->line
-    );
+static void expression(Parser *parser) {
+    parse_precedence(parser, PREC_ASSIGNMENT);
 }
 
 static uint16_t parse_variable(Parser *parser, const char *message) {
@@ -278,12 +300,28 @@ static uint16_t parse_variable(Parser *parser, const char *message) {
     return identifier_constant(parser);
 }
 
-static void expression(Parser *parser) {
-    parse_precedence(parser, PREC_ASSIGNMENT);
+static void define_variable(Parser *parser, uint16_t global) {
+    if (global > 0xff) {
+        emit_byte(parser, OP_DEFINE_GLOBAL_LONG);
+        emit_byte(parser, global >> 0x8);
+        emit_byte(parser, global & 0xff);
+    }
+    else {
+        emit_byte(parser, OP_DEFINE_GLOBAL);
+        emit_byte(parser, global & 0xff);
+    }
 }
 
 static void var_declaration(Parser *parser) {
     uint16_t global = parse_variable(parser, "Expect variable name.");
+
+    if (match(parser, TOKEN_EQUAL))
+        expression(parser);
+    else
+        emit_byte(parser, OP_NIL);
+
+    consume(parser, TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
+    define_variable(parser, global);
 }
 
 static void expression_statement(Parser *parser) {
@@ -359,6 +397,7 @@ bool compile(const char *source, VM *vm, Chunk *chunk) {
 
 #ifdef DEBUG
     disassemble_chunk(parser.compiling_chunk, "chunk");
+    printf("\n");
 #endif
 
     return !parser.had_error;

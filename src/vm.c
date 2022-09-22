@@ -46,10 +46,12 @@ void vm_init(VM *vm) {
     reset_stack(vm);
     vm->objects = NULL;
     table_init(&vm->strings);
+    table_init(&vm->globals);
 }
 
 void vm_free(VM *vm) {
     table_free(&vm->strings);
+    table_free(&vm->globals);
     free_objects(vm->objects);
 }
 
@@ -65,11 +67,31 @@ Value vm_stack_peek(VM *vm, int distance) {
     return vm->sp[-1 - distance];
 }
 
+static void global_define(VM *vm, ObjString *name) {
+    table_set(&vm->globals, name, vm_stack_peek(vm, 0));
+    vm_stack_pop(vm);
+    vm_stack_pop(vm);
+}
+
+static int global_get(VM *vm, ObjString *name) {
+    Value value;
+    if (!table_get(&vm->globals, name, &value)) {
+        runtime_error(vm, "Undefined variable '%s'.", name->data);
+        return 1;
+    }
+    vm_stack_pop(vm);
+    vm_stack_push(vm, value);
+
+    return 0;
+}
+
 static InterpretResult run(VM *vm) {
 #define READ_BYTE() (*vm->ip++)
 #define READ_CONSTANT() (vm->chunk->constants.values[READ_BYTE()])
 #define READ_CONSTANT_LONG()                                                   \
     (vm->chunk->constants.values[READ_BYTE() << 8 | READ_BYTE()])
+#define READ_STRING() AS_STRING(READ_CONSTANT())
+#define READ_STRING_LONG() AS_STRING(READ_CONSTANT_LONG())
 #define BINARY_OP(value_type, op)                                              \
     do {                                                                       \
         if (!IS_NUMBER(vm_stack_peek(vm, 0)) ||                                \
@@ -114,6 +136,20 @@ static InterpretResult run(VM *vm) {
             case OP_FALSE: vm_stack_push(vm, BOOL_VAL(false)); break;
             case OP_POP:   vm_stack_pop(vm); break;
 
+            case OP_GET_GLOBAL: {
+                if (global_get(vm, READ_STRING()) != 0)
+                    return INTERPRET_RUNTIME_ERROR;
+                break;
+            }
+            case OP_GET_GLOBAL_LONG: {
+                if (global_get(vm, READ_STRING_LONG()) != 0)
+                    return INTERPRET_RUNTIME_ERROR;
+                break;
+            }
+
+            case OP_DEFINE_GLOBAL: global_define(vm, READ_STRING()); break;
+            case OP_DEFINE_GLOBAL_LONG: global_define(vm, READ_STRING_LONG()); break;
+
             case OP_ADD: {
                 if (IS_STRING(vm_stack_peek(vm, 0)) && IS_STRING(vm_stack_peek(vm, 1))) {
                     concatenate(vm);
@@ -154,6 +190,8 @@ static InterpretResult run(VM *vm) {
     }
 
 #undef BINARY_OP
+#undef READ_STRING_LONG
+#undef READ_STRING
 #undef READ_CONSTANT_LONG
 #undef READ_CONSTANT
 #undef READ_BYTE
