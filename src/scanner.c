@@ -153,7 +153,7 @@ static TokenType identifier_type(Scanner *scanner) {
                 }
             }
             break;
-        case 'l': return check_keyword(scanner, 1, 2, "et", TOKEN_WHILE);
+        case 'l': return check_keyword(scanner, 1, 2, "et", TOKEN_LET);
         case 'w': return check_keyword(scanner, 1, 4, "hile", TOKEN_WHILE);
     }
 
