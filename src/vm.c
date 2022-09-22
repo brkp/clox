@@ -70,7 +70,6 @@ Value vm_stack_peek(VM *vm, int distance) {
 static void global_define(VM *vm, ObjString *name) {
     table_set(&vm->globals, name, vm_stack_peek(vm, 0));
     vm_stack_pop(vm);
-    vm_stack_pop(vm);
 }
 
 static int global_get(VM *vm, ObjString *name) {
@@ -79,7 +78,6 @@ static int global_get(VM *vm, ObjString *name) {
         runtime_error(vm, "Undefined variable '%s'.", name->data);
         return 1;
     }
-    vm_stack_pop(vm);
     vm_stack_push(vm, value);
 
     return 0;

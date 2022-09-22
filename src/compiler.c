@@ -119,17 +119,12 @@ static void declaration(Parser *parser);
 static ParseRule *get_rule(TokenType type);
 static void parse_precedence(Parser *parser, Precedence precedence);
 
-static uint16_t identifier_constant(Parser *parser) {
-    Token *name = &parser->prev;
+static uint16_t identifier_constant(Parser *parser, Token *name) {
+    value_array_push(
+        &parser->compiling_chunk->constants,
+        OBJ_VAL(copy_string(parser->vm, name->start, name->length)));
 
-    return chunk_push_constant(
-        parser->compiling_chunk,
-        OBJ_VAL(copy_string(
-            parser->vm,
-            name->start,
-            name->length)),
-        name->line
-    );
+    return (uint16_t)(parser->compiling_chunk->constants.len - 1);
 }
 
 static void binary(Parser *parser) {
@@ -197,7 +192,7 @@ static void string(Parser *parser) {
 }
 
 static void named_variable(Parser *parser) {
-    uint16_t offset = identifier_constant(parser);
+    uint16_t offset = identifier_constant(parser, &parser->prev);
 
     if (offset > 0xff) {
         emit_byte(parser, OP_GET_GLOBAL_LONG);
@@ -297,7 +292,7 @@ static void expression(Parser *parser) {
 
 static uint16_t parse_variable(Parser *parser, const char *message) {
     consume(parser, TOKEN_IDENTIFIER, message);
-    return identifier_constant(parser);
+    return identifier_constant(parser, &parser->prev);
 }
 
 static void define_variable(Parser *parser, uint16_t global) {
