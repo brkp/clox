@@ -85,6 +85,8 @@ static int global_get(VM *vm, ObjString *name) {
     return 0;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsequence-point"
 static InterpretResult run(VM *vm) {
 #define READ_BYTE() (*vm->ip++)
 #define READ_CONSTANT() (vm->chunk->constants.values[READ_BYTE()])
@@ -196,6 +198,7 @@ static InterpretResult run(VM *vm) {
 #undef READ_CONSTANT
 #undef READ_BYTE
 }
+#pragma GCC diagnostic pop
 
 InterpretResult vm_interpret(VM *vm, const char *source) {
     Chunk chunk; chunk_init(&chunk);
