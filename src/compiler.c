@@ -336,6 +336,13 @@ static void print_statement(State *state) {
     emit_byte(state, OP_PRINT);
 }
 
+static void block(State *state) {
+    while (!check(state, TOKEN_RIGHT_BRACE) && !check(state, TOKEN_EOF))
+        declaration(state);
+
+    consume(state, TOKEN_RIGHT_BRACE, "Expect '}' after block.");
+}
+
 static void synchronize(State *state) {
     state->parser.panic_mode = false;
 
@@ -374,9 +381,22 @@ static void declaration(State *state) {
         synchronize(state);
 }
 
+static void begin_scope(State *state) {
+    state->compiler.scope_depth++;
+}
+
+static void end_scope(State *state) {
+    state->compiler.scope_depth--;
+}
+
 static void statement(State *state) {
     if (match(state, TOKEN_PRINT)) {
         print_statement(state);
+    }
+    else if (match(state, TOKEN_LEFT_BRACE)) {
+        begin_scope(state);
+        block(state);
+        end_scope(state);
     }
     else {
         expression_statement(state);
