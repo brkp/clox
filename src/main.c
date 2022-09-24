@@ -30,6 +30,8 @@ static int run_file(const char *path) {
         case INTERPRET_COMPILE_ERROR: return 65;
         case INTERPRET_RUNTIME_ERROR: return 70;
     }
+
+    return 1;
 }
 
 int main(int argc, const char *argv[]) {

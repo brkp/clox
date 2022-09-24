@@ -20,6 +20,8 @@ typedef enum {
     OP_LESS,
     OP_GREATER,
     OP_ADD,
+    OP_SET_GLOBAL,
+    OP_SET_GLOBAL_LONG,
     OP_SUBTRACT,
     OP_MULTIPLY,
     OP_DIVIDE,

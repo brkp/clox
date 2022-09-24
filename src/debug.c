@@ -77,6 +77,10 @@ int disassemble_opcode(Chunk *chunk, int offset) {
             return simple_opcode("OP_LESS", offset);
         case OP_ADD:
             return simple_opcode("OP_ADD", offset);
+        case OP_SET_GLOBAL:
+            return constant_opcode("OP_SET_GLOBAL", chunk, offset);
+        case OP_SET_GLOBAL_LONG:
+            return constant_long_opcode("OP_SET_GLOBAL_LONG", chunk, offset);
         case OP_SUBTRACT:
             return simple_opcode("OP_SUBTRACT", offset);
         case OP_MULTIPLY:

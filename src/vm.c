@@ -83,6 +83,16 @@ static int global_get(VM *vm, ObjString *name) {
     return 0;
 }
 
+static int global_set(VM *vm, ObjString *name) {
+    if (table_set(&vm->globals, name, vm_stack_peek(vm, 0))) {
+        table_del(&vm->globals, name);
+        runtime_error(vm, "Undefined variable '%s'.", name->data);
+        return 1;
+    }
+
+    return 0;
+}
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsequence-point"
 static InterpretResult run(VM *vm) {
@@ -149,6 +159,9 @@ static InterpretResult run(VM *vm) {
 
             case OP_DEFINE_GLOBAL: global_define(vm, READ_STRING()); break;
             case OP_DEFINE_GLOBAL_LONG: global_define(vm, READ_STRING_LONG()); break;
+
+            case OP_SET_GLOBAL: global_set(vm, READ_STRING()); break;
+            case OP_SET_GLOBAL_LONG: global_set(vm, READ_STRING_LONG()); break;
 
             case OP_ADD: {
                 if (IS_STRING(vm_stack_peek(vm, 0)) && IS_STRING(vm_stack_peek(vm, 1))) {
