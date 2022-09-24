@@ -32,7 +32,7 @@ typedef struct {
     Scanner scanner;
 } Parser;
 
-typedef void (*ParseFn)(Parser *parser);
+typedef void (*ParseFn)(Parser *parser, bool can_assign);
 
 typedef struct {
     ParseFn prefix;
@@ -127,7 +127,9 @@ static uint16_t identifier_constant(Parser *parser, Token *name) {
     return (uint16_t)(parser->compiling_chunk->constants.len - 1);
 }
 
-static void binary(Parser *parser) {
+static void binary(Parser *parser, bool can_assign) {
+    (void)can_assign;
+
     TokenType operator_type = parser->prev.type;
     ParseRule *rule = get_rule(operator_type);
     parse_precedence(parser, (Precedence)(rule->precedence + 1));
@@ -159,7 +161,9 @@ static void binary(Parser *parser) {
     }
 }
 
-static void literal(Parser *parser) {
+static void literal(Parser *parser, bool can_assign) {
+    (void)can_assign;
+
     switch (parser->prev.type) {
         case TOKEN_NIL: emit_byte(parser, OP_NIL); break;
         case TOKEN_TRUE: emit_byte(parser, OP_TRUE); break;
@@ -170,18 +174,24 @@ static void literal(Parser *parser) {
     }
 }
 
-static void grouping(Parser *parser) {
+static void grouping(Parser *parser, bool can_assign) {
+    (void)can_assign;
+
     expression(parser);
     consume(parser, TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
-static void number(Parser *parser) {
+static void number(Parser *parser, bool can_assign) {
+    (void)can_assign;
+
     chunk_push_constant(
         parser->compiling_chunk,
         NUMBER_VAL(strtod(parser->prev.start, NULL)), parser->prev.line);
 }
 
-static void string(Parser *parser) {
+static void string(Parser *parser, bool can_assign) {
+    (void)can_assign;
+
     chunk_push_constant(
         parser->compiling_chunk,
         OBJ_VAL(copy_string(
@@ -191,25 +201,37 @@ static void string(Parser *parser) {
         parser->prev.line);
 }
 
-static void named_variable(Parser *parser) {
+static void named_variable(Parser *parser, bool can_assign) {
     uint16_t offset = identifier_constant(parser, &parser->prev);
+    bool is_long = offset > 0xff;
 
-    if (offset > 0xff) {
-        emit_byte(parser, OP_GET_GLOBAL_LONG);
+    uint8_t instruction;
+    if (can_assign && match(parser, TOKEN_EQUAL)) {
+        expression(parser);
+        instruction = is_long ? OP_SET_GLOBAL_LONG : OP_SET_GLOBAL;
+    }
+    else {
+        instruction = is_long ? OP_GET_GLOBAL_LONG : OP_GET_GLOBAL;
+    }
+
+    if (is_long) {
+        emit_byte(parser, instruction);
         emit_byte(parser, offset >> 0x8);
         emit_byte(parser, offset & 0xff);
     }
     else {
-        emit_byte(parser, OP_GET_GLOBAL);
+        emit_byte(parser, instruction);
         emit_byte(parser, offset & 0xff);
     }
 }
 
-static void variable(Parser *parser) {
-    named_variable(parser);
+static void variable(Parser *parser, bool can_assign) {
+    named_variable(parser, can_assign);
 }
 
-static void unary(Parser *parser) {
+static void unary(Parser *parser, bool can_assign) {
+    (void)can_assign;
+
     TokenType operator = parser->prev.type;
     parse_precedence(parser, PREC_UNARY);
 
@@ -278,12 +300,16 @@ static void parse_precedence(Parser *parser, Precedence precedence) {
         return;
     }
 
-    prefix_rule(parser);
+    bool can_assign = precedence <= PREC_ASSIGNMENT;
+    prefix_rule(parser, can_assign);
 
     while (precedence <= get_rule(parser->curr.type)->precedence) {
         advance(parser);
-        get_rule(parser->prev.type)->infix(parser);
+        get_rule(parser->prev.type)->infix(parser, can_assign);
     }
+
+    if (can_assign && match(parser, TOKEN_EQUAL))
+        error_at_current(parser, "Invalid assignment target.");
 }
 
 static void expression(Parser *parser) {
