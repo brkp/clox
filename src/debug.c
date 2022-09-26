@@ -18,6 +18,12 @@ static int constant_opcode(const char *name, Chunk *chunk, int offset) {
     return offset + 2;
 }
 
+static int byte_opcode(const char *name, Chunk *chunk, int offset) {
+    uint8_t slot = chunk->code[offset + 1];
+    printf("%-16s %4d\n", name, slot);
+    return offset + 2;
+}
+
 static int constant_long_opcode(const char *name, Chunk *chunk, int offset) {
     uint16_t constant = chunk->code[offset + 1] << 8 | \
                         chunk->code[offset + 2];
@@ -63,6 +69,10 @@ int disassemble_opcode(Chunk *chunk, int offset) {
             return simple_opcode("OP_POP", offset);
         case OP_EQUAL:
             return simple_opcode("OP_EQUAL", offset);
+        case OP_SET_LOCAL:
+            return byte_opcode("OP_SET_LOCAL", chunk, offset);
+        case OP_GET_LOCAL:
+            return byte_opcode("OP_GET_LOCAL", chunk, offset);
         case OP_GET_GLOBAL:
             return constant_opcode("OP_GET_GLOBAL", chunk, offset);
         case OP_GET_GLOBAL_LONG:

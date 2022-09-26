@@ -55,7 +55,6 @@ typedef struct {
     Precedence precedence;
 } ParseRule;
 
-
 bool compile(const char *source, VM *vm, Chunk *chunk);
 
 #endif

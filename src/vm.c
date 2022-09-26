@@ -163,6 +163,21 @@ static InterpretResult run(VM *vm) {
             case OP_SET_GLOBAL: global_set(vm, READ_STRING()); break;
             case OP_SET_GLOBAL_LONG: global_set(vm, READ_STRING_LONG()); break;
 
+            // TODO: not implemented
+            case OP_SET_LOCAL_LONG: break;
+            // TODO: not implemented
+            case OP_GET_LOCAL_LONG: break;
+            case OP_SET_LOCAL: {
+                uint8_t slot = READ_BYTE();
+                vm->stack[slot] = vm_stack_peek(vm, slot);
+                break;
+            }
+            case OP_GET_LOCAL: {
+                uint8_t slot = READ_BYTE();
+                vm_stack_push(vm, vm->stack[slot]);
+                break;
+            }
+
             case OP_ADD: {
                 if (IS_STRING(vm_stack_peek(vm, 0)) && IS_STRING(vm_stack_peek(vm, 1))) {
                     concatenate(vm);
