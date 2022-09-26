@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "compiler.h"
 #include "chunk.h"
@@ -106,6 +107,58 @@ static uint16_t identifier_constant(State *state, Token *name) {
     return (uint16_t)(state->compiler.compiling_chunk->constants.len - 1);
 }
 
+static bool identifiers_equal(Token *a, Token *b) {
+    if (a->length != b->length)
+        return false;
+
+    return memcmp(a->start, b->start, a->length) == 0;
+}
+
+static int resolve_local(State *state, Token *name) {
+    for (int i = state->compiler.local_count - 1; i >= 0; i--) {
+        Local *local = &state->compiler.locals[i];
+        if (identifiers_equal(name, &local->name)) {
+            if (local->depth == -1)
+                error_at_current(state, "Can't read local variable in its own initializer.");
+
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+static void add_local(State *state, Token name) {
+    if (state->compiler.local_count == UINT8_MAX + 1) {
+        error_at_current(state, "Too many local variables in function.");
+        return;
+    }
+
+    Local *local = &state->compiler.locals[state->compiler.local_count++];
+    local->name = name;
+    local->depth = -1;
+}
+
+static void declare_variable(State *state) {
+    if (state->compiler.scope_depth == 0)
+        return;
+
+    Token *name = &state->parser.prev;
+    for (int i = state->compiler.local_count - 1; i >= 0; i--) {
+        Local *local = &state->compiler.locals[i];
+
+        if (local->depth != -1 && local->depth < state->compiler.scope_depth) {
+            break;
+        }
+
+        if (identifiers_equal(name, &local->name)) {
+            error_at_current(state, "Already a variable with this name in this scope.");
+        }
+    }
+
+    add_local(state, *name);
+}
+
 static void binary(State *state, bool can_assign) {
     (void)can_assign;
 
@@ -181,27 +234,36 @@ static void string(State *state, bool can_assign) {
 }
 
 static void named_variable(State *state, bool can_assign) {
-    uint16_t offset = identifier_constant(state, &state->parser.prev);
-    bool is_long = offset > 0xff;
+    uint16_t offset; bool is_long;
+    uint8_t instruction, get_instruction, set_instruction;
 
-    uint8_t instruction;
-    if (can_assign && match(state, TOKEN_EQUAL)) {
+    Token *name = &state->parser.prev;
+    int local_offset = resolve_local(state, name);
+
+    if (local_offset != -1) {
+        offset = local_offset;
+        is_long = offset > 0xff;
+        set_instruction = is_long ? OP_SET_LOCAL_LONG : OP_SET_LOCAL;
+        get_instruction = is_long ? OP_GET_LOCAL_LONG : OP_GET_LOCAL;
+    }
+    else {
+        offset = identifier_constant(state, name);
+        is_long = offset > 0xff;
+        set_instruction = is_long ? OP_SET_GLOBAL_LONG : OP_SET_GLOBAL;
+        get_instruction = is_long ? OP_GET_GLOBAL_LONG : OP_GET_GLOBAL;
+    }
+
+    if (!can_assign || !match(state, TOKEN_EQUAL))
+        instruction = get_instruction;
+    else {
         expression(state);
-        instruction = is_long ? OP_SET_GLOBAL_LONG : OP_SET_GLOBAL;
-    }
-    else {
-        instruction = is_long ? OP_GET_GLOBAL_LONG : OP_GET_GLOBAL;
+        instruction = set_instruction;
     }
 
-    if (is_long) {
-        emit_byte(state, instruction);
+    emit_byte(state, instruction);
+    if (is_long)
         emit_byte(state, offset >> 0x8);
-        emit_byte(state, offset & 0xff);
-    }
-    else {
-        emit_byte(state, instruction);
-        emit_byte(state, offset & 0xff);
-    }
+    emit_byte(state, offset & 0xff);
 }
 
 static void variable(State *state, bool can_assign) {
@@ -297,10 +359,27 @@ static void expression(State *state) {
 
 static uint16_t parse_variable(State *state, const char *message) {
     consume(state, TOKEN_IDENTIFIER, message);
+
+    declare_variable(state);
+    if (state->compiler.scope_depth > 0) return 0;
+
     return identifier_constant(state, &state->parser.prev);
 }
 
+static void mark_initialized(State *state) {
+    if (state->compiler.scope_depth == 0)
+        return;
+
+    state->compiler.locals[state->compiler.local_count - 1].depth =
+        state->compiler.scope_depth;
+}
+
 static void define_variable(State *state, uint16_t global) {
+    if (state->compiler.scope_depth > 0) {
+        mark_initialized(state);
+        return;
+    }
+
     if (global > 0xff) {
         emit_byte(state, OP_DEFINE_GLOBAL_LONG);
         emit_byte(state, global >> 0x8);
@@ -386,7 +465,14 @@ static void begin_scope(State *state) {
 }
 
 static void end_scope(State *state) {
-    state->compiler.scope_depth--;
+    int depth = --state->compiler.scope_depth;
+
+    while (state->compiler.local_count > 0 &&
+           state->compiler.locals[state->compiler.local_count - 1].depth > depth)
+    {
+        emit_byte(state, OP_POP);
+        state->compiler.local_count--;
+    }
 }
 
 static void statement(State *state) {
