@@ -26,6 +26,8 @@ typedef struct {
 } Local;
 
 typedef struct {
+    // TODO: make this into a dynamic array so that we can have
+    // more than 256 local variables
     Local locals[UINT8_MAX + 1];
     int local_count;
     int scope_depth;
