@@ -30,6 +30,8 @@ def run(build_type, args):
             return 1
 
     if build_type != get_buildtype():
+        sanitize = ''
+
         match build_type:
             case   'debug': sanitize = 'address,undefined'
             case 'release': sanitize = 'none'
