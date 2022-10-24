@@ -121,6 +121,21 @@ static void emit_return(State *state) {
     emit_byte(state, OP_RETURN);
 }
 
+static void begin_scope(State *state) {
+    state->compiler.scope_depth++;
+}
+
+static void end_scope(State *state) {
+    int depth = --state->compiler.scope_depth;
+
+    while (state->compiler.local_count > 0 &&
+           state->compiler.locals[state->compiler.local_count - 1].depth > depth)
+    {
+        emit_byte(state, OP_POP);
+        state->compiler.local_count--;
+    }
+}
+
 static void expression(State *state);
 static void statement(State *state);
 static void declaration(State *state);
@@ -500,6 +515,54 @@ static void while_statement(State *state) {
     emit_byte(state, OP_POP);
 }
 
+static void for_statement(State *state) {
+    begin_scope(state);
+    consume(state, TOKEN_LEFT_PAREN, "Expect '(' after for.");
+
+    if (match(state, TOKEN_SEMICOLON)) {
+        /* empty initializer */
+    }
+    else if (match(state, TOKEN_LET)) {
+        var_declaration(state);
+    }
+    else {
+        expression_statement(state);
+    }
+
+    int loop_start = state->compiler.compiling_chunk->len;
+    int exit_jump = -1;
+    if (!match(state, TOKEN_SEMICOLON)) {
+        expression(state);
+        consume(state, TOKEN_SEMICOLON, "Expect ';' after loop condition.");
+
+        exit_jump = emit_jump(state, OP_JUMP_IF_FALSE);
+        emit_byte(state, OP_POP);
+    }
+
+    if (!match(state, TOKEN_RIGHT_PAREN)) {
+        int body_jump = emit_jump(state, OP_JUMP);
+        int increment_start = state->compiler.compiling_chunk->len;
+        
+        expression(state);
+        emit_byte(state, OP_POP);
+        consume(state, TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        emit_loop(state, loop_start);
+        loop_start = increment_start;
+        patch_jump(state, body_jump);
+    }
+
+    statement(state);
+    emit_loop(state, loop_start);
+
+    if (exit_jump != -1) {
+        patch_jump(state, exit_jump);
+        emit_byte(state, OP_POP);
+    }
+
+    end_scope(state);
+}
+
 static void block(State *state) {
     while (!check(state, TOKEN_RIGHT_BRACE) && !check(state, TOKEN_EOF))
         declaration(state);
@@ -545,21 +608,6 @@ static void declaration(State *state) {
         synchronize(state);
 }
 
-static void begin_scope(State *state) {
-    state->compiler.scope_depth++;
-}
-
-static void end_scope(State *state) {
-    int depth = --state->compiler.scope_depth;
-
-    while (state->compiler.local_count > 0 &&
-           state->compiler.locals[state->compiler.local_count - 1].depth > depth)
-    {
-        emit_byte(state, OP_POP);
-        state->compiler.local_count--;
-    }
-}
-
 static void statement(State *state) {
     if (match(state, TOKEN_PRINT)) {
         print_statement(state);
@@ -569,6 +617,9 @@ static void statement(State *state) {
     }
     else if (match(state, TOKEN_WHILE)) {
         while_statement(state);
+    }
+    else if (match(state, TOKEN_FOR)) {
+        for_statement(state);
     }
     else if (match(state, TOKEN_LEFT_BRACE)) {
         begin_scope(state);
