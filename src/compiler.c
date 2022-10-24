@@ -89,6 +89,24 @@ static void emit_byte(State *state, uint8_t byte) {
     chunk_push(state->compiler.compiling_chunk, byte, state->parser.prev.line);
 }
 
+static int emit_jump(State *state, uint8_t instruction) {
+    emit_byte(state, instruction);
+    emit_byte(state, 0xff);
+    emit_byte(state, 0xff);
+
+    return state->compiler.compiling_chunk->len - 2;
+}
+
+static void patch_jump(State *state, int offset) {
+    int jump = state->compiler.compiling_chunk->len - 2;
+
+    if (jump > UINT16_MAX)
+        error_at_current(state, "Too much code to jump over.");
+
+    state->compiler.compiling_chunk->code[offset + 0] = (jump >> 8) & 0xff;
+    state->compiler.compiling_chunk->code[offset + 1] = (jump >> 0) & 0xff;
+}
+
 static void emit_return(State *state) {
     emit_byte(state, OP_RETURN);
 }
@@ -415,6 +433,16 @@ static void print_statement(State *state) {
     emit_byte(state, OP_PRINT);
 }
 
+static void if_statement(State *state) {
+    consume(state, TOKEN_LEFT_PAREN, "Expect '(' after if.");
+    expression(state);
+    consume(state, TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    int then_jump = emit_jump(state, OP_JUMP_IF_FALSE);
+    statement(state);
+    patch_jump(state, then_jump);
+}
+
 static void block(State *state) {
     while (!check(state, TOKEN_RIGHT_BRACE) && !check(state, TOKEN_EOF))
         declaration(state);
@@ -478,6 +506,9 @@ static void end_scope(State *state) {
 static void statement(State *state) {
     if (match(state, TOKEN_PRINT)) {
         print_statement(state);
+    }
+    else if (match(state, TOKEN_IF)) {
+        if_statement(state);
     }
     else if (match(state, TOKEN_LEFT_BRACE)) {
         begin_scope(state);
