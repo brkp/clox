@@ -177,6 +177,30 @@ static void declare_variable(State *state) {
     add_local(state, *name);
 }
 
+static void and_(State *state, bool can_assign) {
+    (void)can_assign;
+
+    int end_jump = emit_jump(state, OP_JUMP_IF_FALSE);
+
+    emit_byte(state, OP_POP);
+    parse_precedence(state, PREC_AND);
+
+    patch_jump(state, end_jump);
+}
+
+static void or_(State *state, bool can_assign) {
+    (void)can_assign;
+
+    int else_jump = emit_jump(state, OP_JUMP_IF_FALSE);
+    int end_jump = emit_jump(state, OP_JUMP);
+
+    patch_jump(state, else_jump);
+    emit_byte(state, OP_POP);
+
+    parse_precedence(state, PREC_OR);
+    patch_jump(state, end_jump);
+}
+
 static void binary(State *state, bool can_assign) {
     (void)can_assign;
 
@@ -326,7 +350,7 @@ ParseRule RULES[] = {
     [TOKEN_IDENTIFIER]    = {variable,     NULL,   PREC_NONE},
     [TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
-    [TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_AND]           = {NULL,     and_,   PREC_AND},
     [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
     [TOKEN_FALSE]         = {literal,  NULL,   PREC_NONE},
@@ -334,7 +358,7 @@ ParseRule RULES[] = {
     [TOKEN_FN]            = {NULL,     NULL,   PREC_NONE},
     [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
     [TOKEN_NIL]           = {literal,  NULL,   PREC_NONE},
-    [TOKEN_OR]            = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_OR]            = {NULL,     or_,    PREC_OR},
     [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
     [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
     [TOKEN_SUPER]         = {NULL,     NULL,   PREC_NONE},
