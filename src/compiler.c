@@ -97,9 +97,19 @@ static int emit_jump(State *state, uint8_t instruction) {
     return state->compiler.compiling_chunk->len - 2;
 }
 
+static void emit_loop(State *state, int loop_start) {
+    emit_byte(state, OP_LOOP);
+
+    int offset = state->compiler.compiling_chunk->len - loop_start + 2;
+    if (offset > UINT16_MAX)
+        error_at_current(state, "Loop body too large.");
+
+    emit_byte(state, (offset >> 8) & 0xff);
+    emit_byte(state, (offset >> 0) & 0xff);
+}
+
 static void patch_jump(State *state, int offset) {
     int jump = state->compiler.compiling_chunk->len - offset - 2;
-
     if (jump > UINT16_MAX)
         error_at_current(state, "Too much code to jump over.");
 
@@ -474,6 +484,22 @@ static void if_statement(State *state) {
     patch_jump(state, else_jump);
 }
 
+static void while_statement(State *state) {
+    int loop_start = state->compiler.compiling_chunk->len;
+
+    consume(state, TOKEN_LEFT_PAREN, "Expect '(' after while.");
+    expression(state);
+    consume(state, TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    int exit_jump = emit_jump(state, OP_JUMP_IF_FALSE);
+    emit_byte(state, OP_POP);
+    statement(state);
+    emit_loop(state, loop_start);
+
+    patch_jump(state, exit_jump);
+    emit_byte(state, OP_POP);
+}
+
 static void block(State *state) {
     while (!check(state, TOKEN_RIGHT_BRACE) && !check(state, TOKEN_EOF))
         declaration(state);
@@ -540,6 +566,9 @@ static void statement(State *state) {
     }
     else if (match(state, TOKEN_IF)) {
         if_statement(state);
+    }
+    else if (match(state, TOKEN_WHILE)) {
+        while_statement(state);
     }
     else if (match(state, TOKEN_LEFT_BRACE)) {
         begin_scope(state);
