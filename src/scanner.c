@@ -67,20 +67,23 @@ static void skip_whitespace(Scanner *scanner) {
         switch (peek(scanner)) {
             case ' ' :
             case '\t':
-            case '\r':
+            case '\r': {
                 advance(scanner);
                 break;
-            case '\n':
+            }
+            case '\n': {
                 scanner->line++;
                 advance(scanner);
                 break;
-            case '/':
+            }
+            case '/': {
                 if (peek_next(scanner) != '/')
                     return;
 
                 while (peek(scanner) != '\n' && !is_at_end(scanner))
                     advance(scanner);
                 break;
+            }
             default:
                 return;
         }

@@ -98,7 +98,7 @@ static int emit_jump(State *state, uint8_t instruction) {
 }
 
 static void patch_jump(State *state, int offset) {
-    int jump = state->compiler.compiling_chunk->len - 2;
+    int jump = state->compiler.compiling_chunk->len - offset - 2;
 
     if (jump > UINT16_MAX)
         error_at_current(state, "Too much code to jump over.");
@@ -439,8 +439,15 @@ static void if_statement(State *state) {
     consume(state, TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
     int then_jump = emit_jump(state, OP_JUMP_IF_FALSE);
+    emit_byte(state, OP_POP);
     statement(state);
+    int else_jump = emit_jump(state, OP_JUMP);
     patch_jump(state, then_jump);
+    emit_byte(state, OP_POP);
+
+    if (match(state, TOKEN_ELSE))
+        statement(state);
+    patch_jump(state, else_jump);
 }
 
 static void block(State *state) {
